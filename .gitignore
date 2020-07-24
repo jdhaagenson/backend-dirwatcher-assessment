@@ -1,1 +1,9 @@
 .vscode/
+venv
+rubric.md
+__pycache__
+.idea
+test_dir
+tests/
+*.xml
+*.iml
