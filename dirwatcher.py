@@ -92,8 +92,8 @@ def shutdown_banner(t, elapsed):
 def scan_line(file, line, magic):
     """
     Scans a single line in file and checks if it contains magic string,
-    returning True if it does, False if does not. Also increments value of counter in
-    model_directory
+    returning True if it does, False if does not. Also increments value
+    of counter in model_directory
     :param file: file to scan
     :type file: str
     :param line: line number to check
@@ -111,7 +111,8 @@ def scan_line(file, line, magic):
             model_directory[file] += 1
             return False
     except Exception as e:
-        logger.error("{} - {} error occurred while scanning {}".format(new_timestamp(), e.args, file))
+        logger.error("{} - {} error occurred while scanning {}".format(
+            new_timestamp(), e.args, file))
 
 
 def detect_added_files(files, magic):
@@ -131,7 +132,8 @@ def detect_added_files(files, magic):
         for file in files:
             if file not in model_directory.keys():
                 model_directory[file] = 0
-                logger.info('{} - New file added to dictionary - {}'.format(new_timestamp(), file))
+                logger.info('{} - New file added to dictionary - {}'.format(
+                    new_timestamp(), file))
                 scan_line(file, 0, magic)
         return model_directory
     except Exception as e:
@@ -154,10 +156,12 @@ def detect_removed_files(files):
         for key in model_directory.keys():
             if key not in files:
                 model_directory.pop(key)
-                logger.info('{} - File removed from directory: {}'.format(new_timestamp(), key))
+                logger.info('{} - File removed from directory: {}'.format(
+                    new_timestamp(), key))
         return model_directory
     except Exception as e:
-        logger.error("{} - There was a {} error".format(new_timestamp(), e.args))
+        logger.error("{} - There was a {} error".format(
+            new_timestamp(), e.args))
         return model_directory
 
 
@@ -182,9 +186,11 @@ def watch_directory(directory, ext, magic_text):
             detect_removed_files(files)
             return sync_directory(magic_text)
         else:
-            logger.error('{} - Directory {} does not exist'.format(new_timestamp(), directory))
-    except Exception as e:
-        logger.error("{} - Directory {} does not exist".format(new_timestamp(), directory))
+            logger.error('{} - Directory {} does not exist'.format(
+                new_timestamp(), directory))
+    except Exception:
+        logger.error("{} - Directory {} does not exist".format(
+            new_timestamp(), directory))
         return model_directory
 
 
@@ -205,15 +211,14 @@ def get_list_files(directory, ext):
             return files
     except Exception as e:
         logger.error(
-            '{} - There was a[n] {} error when trying to open directory'.format(
-                new_timestamp(), e.args))
+            '{} - Error occurred - {}'.format(new_timestamp(), e.args))
 
 
 def signal_handler(sig_num, frame):
     """
     This is a handler for SIGTERM AND SIGINT. Other signals can be mapped here
     as well (SIGHUP?)
-    Basically, it just sets a global flag, and main() will exit its loop if 
+    Basically, it just sets a global flag, and main() will exit its loop if
     the signal is trapped.
     :param sig_num: The integer signal number that was trapped from the OS
     :type sig_num: int
@@ -222,9 +227,11 @@ def signal_handler(sig_num, frame):
     """
     # log the associated signal name
     global exit_flag
-    signames = dict((k, v) for v, k in reversed(sorted(signal.__dict__.items()))
+    signames = dict((k, v) for v, k in reversed(
+        sorted(signal.__dict__.items()))
                     if v.startswith('SIG') and not v.startswith('SIG_'))
-    logger.warning('{} - Received signal: '.format(new_timestamp()) + signames[sig_num])
+    logger.warning('{} - Received signal: '.format(
+        new_timestamp()) + signames[sig_num])
     if sig_num == signal.SIGINT or signal.SIGTERM:
         exit_flag = True
 
@@ -247,10 +254,12 @@ def sync_directory(magic):
     try:
         for k, v in model_directory.items():
             if scan_line(k, v, magic):
-                logger.info('{} - {} - Magic text found - line {}'.format(new_timestamp(), k, v))
+                logger.info('{} - {} - Magic text found - line {}'.format(
+                    new_timestamp(), k, v))
         return model_directory
     except Exception as e:
-        logger.error("{} - There was a[n] {} error while trying to sync directory".format(new_timestamp(), e.args))
+        logger.error("{} - Error occurred - {}".format(
+            new_timestamp(), e.args))
         return model_directory
 
 
@@ -295,15 +304,16 @@ def main():
 
     while not exit_flag:
         try:
-            watch_directory(args.dir, args.ext, args.magic)
-            # files = get_list_files(args.dir, args.ext)
-            # detect_added_files(args.dir, files, args.magic)
-            # detect_removed_files(files)
+            # watch_directory(args.dir, args.ext, args.magic)
+            files = get_list_files(args.dir, args.ext)
+            detect_added_files(files, args.magic)
+            detect_removed_files(files)
             sync_directory(args.magic)
         except Exception as e:
             # This is an UNHANDLED exception
             # Log an ERROR level message here
-            logger.error("There was a[n] {} error when trying to run watch_directory".format(e.args))
+            logger.error(
+                "{} - Error occurred - {}".format(new_timestamp(), e.args))
         # put a sleep inside my while loop so I don't peg the cpu usage to 100%
         time.sleep(polling_interval)
 
